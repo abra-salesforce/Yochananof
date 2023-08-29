@@ -1,0 +1,11 @@
+<aura:component
+  implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction,force:hasSObjectName"
+  access="global"
+  controller="ClickToCallController"
+>
+  <aura:attribute name="recordId" type="String" />
+  <aura:attribute name="dialtoclidextclid" type="String" />
+  <aura:attribute name="ext" type="String" />
+
+  <aura:handler name="init" action="{!c.openPage}" value="{!this}" />
+</aura:component>
