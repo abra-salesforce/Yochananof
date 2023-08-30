@@ -25,29 +25,6 @@
     // and initialize the account record (sObject) variable. Reference the flow's
     // API name.
     flow.startFlow("Telephony_Screen_Flow", inputVariables);
-
-    // Handle flow finish event
-    // flow.on("statusChange", function (event) {
-    //   if (event.getParam("status") === "FINISHED") {
-    //     var flowOutputVariables = event.getParam("outputVariables");
-    //     var recordId = flowOutputVariables.NavigationRecord.value;
-    //     var objectName = flowOutputVariables.VarObjectName.value;
-
-    //     // Navigate to the record page
-    //     component[NavigationMixin.Navigate]({
-    //       type: "standard__recordPage",
-    //       attributes: {
-    //         recordId: recordId,
-    //         objectApiName: objectName,
-    //         actionName: "view"
-    //       }
-    //     });
-
-    //     // Close the modal or perform other actions as needed
-
-    //     component.find("overlayLib").notifyClose();
-    //   }
-    // });
   },
 
   statusChange: function (component, event) {
@@ -55,7 +32,7 @@
     console.log("status: " + event.getParam("status"));
     var recordId = "";
     var objectName = "";
-    var secondaryPhoneMatch = "";
+    var secondaryPhoneMatch = false;
     var flowOutputVariables = event.getParam("outputVariables");
 
     if (
@@ -75,21 +52,42 @@
       console.log("objectName: " + objectName);
       console.log("secondaryPhoneMatch: " + secondaryPhoneMatch);
 
-      if (secondaryPhoneMatch != "true" && objectName == "Account") {
-        var relatedListEvent = $A.get("e.force:navigateToRelatedList");
-        relatedListEvent.setParams({
-          relatedListId: "Cases",
-          parentRecordId: recordId
-        });
-        relatedListEvent.fire();
+      var workspaceAPI = component.find("workspace");
+      workspaceAPI.getFocusedTabInfo().then(function (response) {
+        var focusedTabId = response.tabId;
+        workspaceAPI.closeTab({ tabId: focusedTabId });
+      });
+
+      var url = "/lightning/r/" + objectName + "/" + recordId;
+      if (!secondaryPhoneMatch && objectName == "Account") {
+        url += "/related/Cases/view";
       } else {
-        var navEvt = $A.get("e.force:navigateToSObject");
-        navEvt.setParams({
-          recordId: recordId,
-          slideDevName: "detail"
-        });
-        navEvt.fire();
+        url += "/view";
       }
+
+      workspaceAPI
+        .openTab({
+          url: url
+        })
+        .then(function (response) {
+          workspaceAPI.focusTab({ tabId: response });
+        });
     }
   }
 });
+
+// if (secondaryPhoneMatch != "true" && objectName == "Account") {
+//   var relatedListEvent = $A.get("e.force:navigateToRelatedList");
+//   relatedListEvent.setParams({
+//     relatedListId: "Cases",
+//     parentRecordId: recordId
+//   });
+//   relatedListEvent.fire();
+// } else {
+//   var navEvt = $A.get("e.force:navigateToSObject");
+//   navEvt.setParams({
+//     recordId: recordId,
+//     slideDevName: "detail"
+//   });
+//   navEvt.fire();
+// }
